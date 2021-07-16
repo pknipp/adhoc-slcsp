@@ -1,8 +1,8 @@
 const fs = require("fs");
 
-const binarySearch = (array, target, key1, key2, iMin = 0, iMax = array.length - 1) => {
-    let xMin = array[iMin][key1];
-    let xMax = array[iMax][key1];
+const binarySearch = (array, target, key, iMin = 0, iMax = array.length - 1) => {
+    let xMin = array[iMin][key];
+    let xMax = array[iMax][key];
     if (xMin === target) return iMin;
     if (xMax === target) return iMax;
     if (iMax - iMin < 2) return NaN;
@@ -16,15 +16,39 @@ const binarySearch = (array, target, key1, key2, iMin = 0, iMax = array.length -
     return binarySearch(array, target, key, iMin, iMax);
 }
 
+const findMatches = (array, target, key1, key2) => {
+    const matches = new Set();
+    let iMatch = binarySearch(array, target, key1);
+    matches.add(array[iMatch][key2]);
+    let i = iMatch + 1;
+    let n = 1;
+    while (array[i] === target) {
+        matches.add(array[i][key2]);
+        i++;
+        n++;
+    }
+    i = iMatch - 1;
+    while (array[i] === target) {
+        matches.add(array[i][key2]);
+        i--;
+        n++;
+    }
+    return [matches, n];
+}
+
 let zipsRows = fs.readFileSync("./zips.csv", {encoding:'utf8', flag:'r'}).split("\n");
-let headers = zipsRows[0].split(',');
-zipsRows = zipsRows.slice(1).filter(row => !!row).map(row => {
+// let headers = zipsRows[0].split(',');
+zipsRows = zipsRows.slice(1).filter(row => !!row).reduce((set, row) => {
     const vals = row.split(',');
-    row = headers.reduce((pojo, header, index) => {
-        return {...pojo, [header]: vals[index]};
-    }, {});
-    return {...row, tuple: row.state + row.rate_area};
+    set.add([vals[0], vals[1] + vals[4]].join(","));
+    return set;
+}, new Set());
+zipsRows = (Array.from(zipsRows)).map(row => {
+    const vals = row.split(',');
+    return {zipcode: vals[0], tuple: vals[1]};
 }).sort((a, b) => a.zipcode - b.zipcode);
+
+// console.log(zipsRows);
 
 let plansRows = fs.readFileSync("./plans.csv", {encoding:'utf8', flag:'r'}).split("\n");
 headers = plansRows[0].split(',');
@@ -45,7 +69,8 @@ headers = slcspRows[0].split(',');
 
 slcspRows = slcspRows.slice(1).filter(row => !!row).map(row => {
     let zip = row.slice(0, -1);
-//     // binary search for zip in zipsRows
+    let matches = findMatches(zipsRows, zip, 'zipcode', 'tuple');
+    // console.log(zip, matches);
 //     // if there are multiple tuples for that zip, break
 //     // binary search for tuple in plansRows
 //     // assemble all elements in plansRows for that rateArea
