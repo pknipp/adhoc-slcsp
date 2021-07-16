@@ -37,7 +37,6 @@ const findMatches = (array, target, key1, key2) => {
 }
 
 let zipsRows = fs.readFileSync("./zips.csv", {encoding:'utf8', flag:'r'}).split("\n");
-// let headers = zipsRows[0].split(',');
 zipsRows = zipsRows.slice(1).filter(row => !!row).reduce((set, row) => {
     const vals = row.split(',');
     set.add([vals[0], vals[1] + vals[4]].join(","));
@@ -48,21 +47,16 @@ zipsRows = (Array.from(zipsRows)).map(row => {
     return {zipcode: vals[0], tuple: vals[1]};
 }).sort((a, b) => a.zipcode - b.zipcode);
 
-// console.log(zipsRows);
-
 let plansRows = fs.readFileSync("./plans.csv", {encoding:'utf8', flag:'r'}).split("\n");
-headers = plansRows[0].split(',');
-metalHeaderIndex = headers.indexOf('metal_level');
-plansRows = plansRows.slice(1).filter(row => !!row).reduce((rows, row) => {
+plansRows = plansRows.slice(1).filter(row => !!row).reduce((set, row) => {
     const vals = row.split(',');
-    if (vals[metalHeaderIndex] === 'Silver') {
-        row = headers.reduce((pojo, header, index) => {
-            return {...pojo, [header]: vals[index]};
-        }, {});
-        rows = [...rows, {...row, tuple: row.state + row.rate_area}];
-    }
-    return rows;
-}, []).sort((a, b) => a.tuple < b.tuple ? -1 : a.tuple > b.tuple ? 1 : 0);
+    if (vals[2] === 'Silver') set.add([vals[1] + vals[4], vals[3]].join(","));
+    return set;
+}, new Set());
+plansRows = (Array.from(plansRows)).map(row => {
+    const vals = row.split(',');
+    return {tuple: vals[0], rate: vals[1]};
+}).sort((a, b) => a.tuple < b.tuple ? -1 : a.tuple > b.tuple ? 1 : 0);
 
 let slcspRows = fs.readFileSync("./slcsp.csv", {encoding: 'utf8', flag: 'r'}).split("\n");
 headers = slcspRows[0].split(',');
