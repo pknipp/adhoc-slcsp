@@ -37,22 +37,26 @@ const findMatches = (array, target, key1, key2) => {
 }
 
 let zipsRows = fs.readFileSync("./zips.csv", {encoding:'utf8', flag:'r'}).split("\n");
-zipsRows = zipsRows.slice(1).filter(row => !!row).reduce((set, row) => {
+
+zipsRows = zipsRows.reduce((set, row, index) => {
     const vals = row.split(',');
-    set.add([vals[0], vals[1] + vals[4]].join(","));
+    if (index && row) set.add([vals[0], vals[1] + vals[4]].join(","));
     return set;
 }, new Set());
+
 zipsRows = (Array.from(zipsRows)).map(row => {
     const vals = row.split(',');
     return {zipcode: vals[0], tuple: vals[1]};
 }).sort((a, b) => a.zipcode - b.zipcode);
 
 let plansRows = fs.readFileSync("./plans.csv", {encoding:'utf8', flag:'r'}).split("\n");
-plansRows = plansRows.slice(1).filter(row => !!row).reduce((set, row) => {
+
+plansRows = plansRows.reduce((set, row, index) => {
     const vals = row.split(',');
-    if (vals[2] === 'Silver') set.add([vals[1] + vals[4], vals[3]].join(","));
+    if (index && row && vals[2] === 'Silver') set.add([vals[1] + vals[4], vals[3]].join(","));
     return set;
 }, new Set());
+
 plansRows = (Array.from(plansRows)).map(row => {
     const vals = row.split(',');
     return {tuple: vals[0], rate: vals[1]};
