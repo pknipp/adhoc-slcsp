@@ -1,6 +1,13 @@
 const fs = require("fs");
 const process = require("process");
 
+// Read csv files.
+let zipsRows = fs.readFileSync("./zips.csv", {encoding:'utf8'}).split("\n");
+let plansRows = fs.readFileSync("./plans.csv", {encoding:'utf8'}).split("\n");
+let slcspRows = fs.readFileSync("./slcsp.csv", {encoding: 'utf8'}).split("\n");
+
+// Two helper functions:
+
 // "key" is the name of array's property by which the array is sorted
 const binarySearch = (array, target, key, iMin = 0, iMax = array.length - 1) => {
     let [xMin, xMax] = [array[iMin][key], array[iMax][key]];
@@ -20,7 +27,7 @@ const binarySearch = (array, target, key, iMin = 0, iMax = array.length - 1) => 
 // This finds ALL matches in an ordered array.
 const findMatch = (array, target, key1, key2) => {
     const matches = new Set(); // use set to eliminate duplicates
-    let iMatch = binarySearch(array, target, key1);
+    let iMatch = binarySearch(array, target, key1); // finds ONE match
     if (!iMatch) return ''; // target was not found
     let x = array[iMatch][key2];
     matches.add(key1 === 'zipcode' ? x : Number(x));
@@ -44,6 +51,7 @@ const findMatch = (array, target, key1, key2) => {
     } else {
         // Second lowest cost only exists if there are at least two different rates.
         if (matches.size < 2) return '';
+        // one-pass search for second-lowest cost
         let [lowest, secondLowest] = [Infinity, Infinity];
         matches.forEach(rate => {
             if (rate < lowest) {
@@ -56,8 +64,7 @@ const findMatch = (array, target, key1, key2) => {
     }
 }
 
-let zipsRows = fs.readFileSync("./zips.csv", {encoding:'utf8'}).split("\n");
-let plansRows = fs.readFileSync("./plans.csv", {encoding:'utf8'}).split("\n");
+// one-pass (not including sorting) processing of data read from zips.csv
 
 zipsRows = zipsRows.reduce((set, row, index) => {
     const vals = row.split(',');
@@ -67,7 +74,7 @@ zipsRows = zipsRows.reduce((set, row, index) => {
     return set;
 }, new Set());
 
-// Convert from set to array of pojos in order to allow sorting.
+// conversion from set to array of pojos in order to allow sorting
 zipsRows = (Array.from(zipsRows)).map(row => {
     const vals = row.split(',');
     return {zipcode: vals[0], tuple: vals[1]};
@@ -75,6 +82,8 @@ zipsRows = (Array.from(zipsRows)).map(row => {
 
 // let data = zipsRows.map(row => Object.values(row).join(',')).join('\n');
 // fs.writeFileSync("./zipsRows.txt", data);
+
+// single-pass processing (not including sorting) of the data from plans.csv
 
 plansRows = plansRows.reduce((set, row, index) => {
     const vals = row.split(',');
@@ -94,10 +103,11 @@ plansRows = (Array.from(plansRows)).map(row => {
 // data = plansRows.map(row => Object.values(row).join(',')).join('\n');
 // fs.writeFileSync("./plansRows.txt", data);
 
-let slcspRows = fs.readFileSync("./slcsp.csv", {encoding: 'utf8', flag: 'r'}).split("\n");
+// final preparation of output
+
 let output = slcspRows[0] + "\n"; // header
 
-slcspRows = slcspRows.map((row, index) => {
+slcspRows.forEach((row, index) => {
     if (index && row) { // ignore header row and empty rows
         let tuple = findMatch(zipsRows, row.slice(0, -1), 'zipcode', 'tuple'); // find rate-area
         let secondLowestRate = tuple && findMatch(plansRows, tuple, 'tuple', 'rate');
