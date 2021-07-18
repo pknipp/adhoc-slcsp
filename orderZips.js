@@ -8,6 +8,7 @@ let slcspRows = fs.readFileSync("./slcsp.csv", {encoding: 'utf8'}).split("\n");
 
 // Two helper functions:
 
+// This finds ONE match in an ordered array.
 // "key" is the name of array's property by which the array is sorted
 const binarySearch = (array, target, key, iMin = 0, iMax = array.length - 1) => {
     let [xMin, xMax] = [array[iMin][key], array[iMax][key]];
@@ -25,6 +26,8 @@ const binarySearch = (array, target, key, iMin = 0, iMax = array.length - 1) => 
 }
 
 // This finds ALL matches in an ordered array.
+// If this is the first search, it returns the rate-area tuple.
+// If this is the second search, it returns the second-lowest cost. 
 const findMatch = (array, target, key1, key2) => {
     const matches = new Set(); // use set to eliminate duplicates
     let iMatch = binarySearch(array, target, key1); // finds ONE match
